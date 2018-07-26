@@ -1,8 +1,8 @@
 let restaurants,
   neighborhoods,
-  cuisines
-var newMap
-var markers = []
+  cuisines;
+var newMap;
+var markers = [];
 
 /**
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
@@ -11,6 +11,63 @@ document.addEventListener('DOMContentLoaded', (event) => {
   initMap(); // added
   fetchNeighborhoods();
   fetchCuisines();
+});
+
+/* cache the basic stuff initially */
+self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open('installCache').then(function(cache) {
+      return cache.addAll(
+        [
+          '/css/styles.css',
+          '/data/restaurants.json',
+          '/img/1.jpg',
+          '/img/2.jpg',
+          '/img/3.jpg',
+          '/img/4.jpg',
+          '/img/5.jpg',
+          '/img/6.jpg',
+          '/img/7.jpg',
+          '/img/8.jpg',
+          '/img/9.jpg',
+          '/img/10.jpg',
+          '/index.html',
+          '/js/dbhelper.js',
+          '/js/main.js',
+          '/js/restaurant_info.js',
+          '/restaurant.html'
+        ]
+      );
+    })
+  );
+});
+
+self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.match(event.request).then(function(response) {
+      return response || fetch(event.request);
+    })
+  );
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.filter(function(cacheName) {
+
+
+          // Return true if you want to remove this cache,
+          // but remember that caches are shared across
+          // the whole origin
+
+
+        }).map(function(cacheName) {
+          return caches.delete(cacheName);
+        })
+      );
+    })
+  );
 });
 
 /**
@@ -145,9 +202,9 @@ resetRestaurants = (restaurants) => {
  * Create all restaurants HTML and add them to the webpage.
  */
 fillRestaurantsHTML = (restaurants = self.restaurants) => {
-  const ul = document.getElementById('restaurants-list');
+  const rlist = document.getElementById('restaurants-list');
   restaurants.forEach(restaurant => {
-    ul.append(createRestaurantHTML(restaurant));
+    rlist.append(createRestaurantHTML(restaurant));
   });
   addMarkersToMap();
 }
@@ -156,31 +213,32 @@ fillRestaurantsHTML = (restaurants = self.restaurants) => {
  * Create restaurant HTML.
  */
 createRestaurantHTML = (restaurant) => {
-  const li = document.createElement('li');
+  const article = document.createElement('article');
 
   const image = document.createElement('img');
   image.className = 'restaurant-img';
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
-  li.append(image);
+  article.append(image);
 
   const name = document.createElement('h1');
+  name.className = 'restaurant-title';
   name.innerHTML = restaurant.name;
-  li.append(name);
+  article.append(name);
 
   const neighborhood = document.createElement('p');
   neighborhood.innerHTML = restaurant.neighborhood;
-  li.append(neighborhood);
+  article.append(neighborhood);
 
   const address = document.createElement('p');
   address.innerHTML = restaurant.address;
-  li.append(address);
+  article.append(address);
 
   const more = document.createElement('a');
   more.innerHTML = 'View Details';
   more.href = DBHelper.urlForRestaurant(restaurant);
-  li.append(more)
+  article.append(more)
 
-  return li
+  return article
 }
 
 /**
